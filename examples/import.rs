@@ -1,5 +1,3 @@
-use rust_examples::generator;
-
-fn main {
+fn main() {
     println!("main");
 }
