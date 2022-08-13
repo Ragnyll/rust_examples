@@ -106,23 +106,17 @@ impl JobStats {
                 .filter(|ri| ri.referral.is_some())
                 .collect::<Vec<InputStat>>()
                 .len() as u8,
-            mean_days_between_application_first_interview:
-                (days_between_application_and_first_interview(&raw_input)
-                    .into_iter()
-                    .sum::<i64>() as f64)
-                    / (num_first_interviews_taken as f64),
-            mean_days_between_application_and_rejection: (days_between_application_and_rejection(
-                &raw_input,
+            mean_days_between_application_first_interview: {
+                mean(&days_between_application_and_first_interview(&raw_input)).unwrap()
+            },
+            mean_days_between_application_and_rejection: mean(
+                &days_between_application_and_rejection(&raw_input),
             )
-            .into_iter()
-            .sum::<i64>() as f64)
-                / (num_first_interviews_taken as f64),
-            mean_time_between_first_interview_and_offer: (days_between_first_interview_and_offer(
-                &raw_input,
+            .unwrap(),
+            mean_time_between_first_interview_and_offer: mean(
+                &days_between_first_interview_and_offer(&raw_input),
             )
-            .into_iter()
-            .sum::<i64>() as f64)
-                / (num_first_interviews_taken as f64),
+            .unwrap(),
             median_days_between_application_and_first_interview: median(
                 &mut days_between_application_and_first_interview(&raw_input),
             )
@@ -167,11 +161,10 @@ impl JobStats {
             .into_iter()
             .max()
             .unwrap(),
-            mean_time_between_first_interview_and_rejection:
-                (days_between_first_interview_and_rejection(&raw_input)
-                    .into_iter()
-                    .sum::<i64>() as f64)
-                    / (num_first_interviews_taken as f64),
+            mean_time_between_first_interview_and_rejection: mean(
+                &days_between_first_interview_and_rejection(&raw_input),
+            )
+            .unwrap(),
             median_time_between_first_interview_and_rejection: median(
                 &mut days_between_first_interview_and_rejection(&raw_input),
             )
@@ -250,7 +243,10 @@ fn days_between_application_and_first_interview(input_stats: &Vec<InputStat>) ->
     let mut days_between_application_and_first_interview = vec![];
 
     for stat in input_stats {
-        if stat.offer_dt.is_some() && stat.first_interview.is_some() && stat.first_interview.unwrap() != -1.0 {
+        if stat.offer_dt.is_some()
+            && stat.first_interview.is_some()
+            && stat.first_interview.unwrap() != -1.0
+        {
             days_between_application_and_first_interview.push(
                 (f64_to_datetime(stat.first_interview.unwrap()) - f64_to_datetime(stat.applied_dt))
                     .num_days(),
