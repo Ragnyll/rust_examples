@@ -14,6 +14,8 @@ pub struct InputStat {
     offer_amt: Option<f64>,
     accepted: Option<String>,
     referral: Option<String>,
+    url: Option<String>,
+    notes: Option<String>,
 }
 
 /// converts a datetime stored as a float to a datetime
@@ -187,11 +189,15 @@ impl JobStats {
         }
     }
 }
+
 fn days_between_first_interview_and_rejection(input_stats: &Vec<InputStat>) -> Vec<i64> {
     let mut days_between_first_interview_and_offer = vec![];
 
     for stat in input_stats {
-        if stat.offer_dt.is_some() && stat.first_interview.is_some() {
+        if stat.rejected_dt.is_some()
+            && stat.first_interview.is_some()
+            && stat.first_interview.unwrap() != -1.0
+        {
             days_between_first_interview_and_offer.push(
                 (f64_to_datetime(stat.rejected_dt.unwrap())
                     - f64_to_datetime(stat.first_interview.unwrap()))
@@ -207,7 +213,10 @@ fn days_between_first_interview_and_offer(input_stats: &Vec<InputStat>) -> Vec<i
     let mut days_between_first_interview_and_offer = vec![];
 
     for stat in input_stats {
-        if stat.offer_dt.is_some() && stat.first_interview.is_some() {
+        if stat.offer_dt.is_some()
+            && stat.first_interview.is_some()
+            && stat.first_interview.unwrap() != -1.0
+        {
             days_between_first_interview_and_offer.push(
                 (f64_to_datetime(stat.offer_dt.unwrap())
                     - f64_to_datetime(stat.first_interview.unwrap()))
@@ -223,7 +232,10 @@ fn days_between_application_and_rejection(input_stats: &Vec<InputStat>) -> Vec<i
     let mut days_between_application_and_rejection = vec![];
 
     for stat in input_stats {
-        if stat.offer_dt.is_some() && stat.first_interview.is_some() {
+        if stat.rejected_dt.is_some()
+            && stat.first_interview.is_some()
+            && stat.first_interview.unwrap() != -1.0
+        {
             days_between_application_and_rejection.push(
                 (f64_to_datetime(stat.rejected_dt.unwrap()) - f64_to_datetime(stat.applied_dt))
                     .num_days(),
@@ -238,7 +250,7 @@ fn days_between_application_and_first_interview(input_stats: &Vec<InputStat>) ->
     let mut days_between_application_and_first_interview = vec![];
 
     for stat in input_stats {
-        if stat.offer_dt.is_some() && stat.first_interview.is_some() {
+        if stat.offer_dt.is_some() && stat.first_interview.is_some() && stat.first_interview.unwrap() != -1.0 {
             days_between_application_and_first_interview.push(
                 (f64_to_datetime(stat.first_interview.unwrap()) - f64_to_datetime(stat.applied_dt))
                     .num_days(),
@@ -260,12 +272,12 @@ impl std::fmt::Display for JobStats {
         println!("|--------|-------|");
         println!("|Jobs applied to|{}|", self.num_applied);
         println!(
-            "|Count of referrals | {} ({}) |",
+            "|Count of referrals | {} ({} of all jobs applied to) |",
             self.num_referrals,
             percent_with_precision_2(self.num_referrals.into(), self.num_applied.into())
         );
         println!(
-            "|First interviews taken | {} ({})|",
+            "|First interviews completed| {} ({} of jobs applied to)|",
             self.num_first_interviews_taken,
             percent_with_precision_2(
                 self.num_first_interviews_taken.into(),
@@ -273,7 +285,7 @@ impl std::fmt::Display for JobStats {
             )
         );
         println!(
-            "|First interviews I declined | {} ({})|",
+            "|First interviews I declined | {} ({} of all jobs applied to)|",
             self.num_first_interviews_i_declined,
             percent_with_precision_2(
                 self.num_first_interviews_i_declined.into(),
@@ -281,12 +293,12 @@ impl std::fmt::Display for JobStats {
             )
         );
         println!(
-            "|Offers |{} ({})|",
+            "|Offers |{} ({} of al jobs applied to)|",
             self.num_offers,
             percent_with_precision_2(self.num_offers.into(), self.num_applied.into())
         );
         println!(
-            "|Rejections (all types)|{} ({})|",
+            "|Rejections (all types)|{} ({} of all jobs applied to)|",
             self.num_rejections_all_types,
             percent_with_precision_2(
                 self.num_rejections_all_types.into(),
@@ -294,7 +306,7 @@ impl std::fmt::Display for JobStats {
             )
         );
         println!(
-            "|Rejections without first interview|{} ({} of rejections)|",
+            "|Rejections without first interview|{} ({} of rejections (all types))|",
             self.num_rejections_no_first_interview,
             percent_with_precision_2(
                 self.num_rejections_no_first_interview.into(),
@@ -302,7 +314,7 @@ impl std::fmt::Display for JobStats {
             )
         );
         println!(
-            "|Rejection after first interview | {} ({}) |",
+            "|Rejection after first interview | {} ({} of rejections (all types)) |",
             self.num_rejection_after_first_interview,
             percent_with_precision_2(
                 self.num_rejection_after_first_interview.into(),
@@ -360,19 +372,31 @@ impl std::fmt::Display for JobStats {
             "|Median time (days) between first interview and rejection|{}|",
             self.median_time_between_first_interview_and_rejection
         );
-        println!("|Shortest time (days) between first interview and rejection |{}|",
-            self.shortest_time_betwen_first_interview_and_rejection);
-        println!("|Longest time (days) between first interview and rejection|{}|",
-            self.longest_time_betwen_first_interview_and_rejection);
+        println!(
+            "|Shortest time (days) between first interview and rejection |{}|",
+            self.shortest_time_betwen_first_interview_and_rejection
+        );
+        println!(
+            "|Longest time (days) between first interview and rejection|{}|",
+            self.longest_time_betwen_first_interview_and_rejection
+        );
         println!("|---|---|");
-        println!("|Mean time (days) between first interview and offer|{}|",
-            self.mean_time_between_first_interview_and_offer);
-        println!("|Median time (days) between first interview and offer|{}|",
-            self.median_time_between_first_interview_and_offer);
-        println!("|Shortest time (days) between first interview and offer|{}|",
-            self.shortest_time_between_first_interview_and_offer);
-        println!("|Longest time (days) between first interview and offer|{}|",
-            self.longest_time_between_first_interview_and_offer);
+        println!(
+            "|Mean time (days) between first interview and offer|{}|",
+            self.mean_time_between_first_interview_and_offer
+        );
+        println!(
+            "|Median time (days) between first interview and offer|{}|",
+            self.median_time_between_first_interview_and_offer
+        );
+        println!(
+            "|Shortest time (days) between first interview and offer|{}|",
+            self.shortest_time_between_first_interview_and_offer
+        );
+        println!(
+            "|Longest time (days) between first interview and offer|{}|",
+            self.longest_time_between_first_interview_and_offer
+        );
         Ok(())
     }
 }
@@ -441,29 +465,7 @@ mod test {
             accepted: Some("T".to_string()),
             referral: Some("Ol Nessy".to_string()),
         };
-        let input_stat_2 = InputStat {
-            company: "company".to_string(),
-            position: "software".to_string(),
-            applied_dt: 20220406.0,
-            rejected_dt: Some(20220408.0),
-            first_interview: Some(20220407.0),
-            offer_dt: Some(20220408.0),
-            offer_amt: Some(349.99),
-            accepted: Some("T".to_string()),
-            referral: Some("Ol Nessy".to_string()),
-        };
-        let input_stat_3 = InputStat {
-            company: "company".to_string(),
-            position: "software".to_string(),
-            applied_dt: 20220406.0,
-            rejected_dt: Some(20220408.0),
-            first_interview: Some(20220407.0),
-            offer_dt: Some(20220408.0),
-            offer_amt: Some(349.99),
-            accepted: Some("T".to_string()),
-            referral: Some("Ol Nessy".to_string()),
-        };
-        let input_stats = vec![input_stat];
+        let input_stats = vec![input_stat_1];
 
         let job_stats = JobStats::new(input_stats);
 
