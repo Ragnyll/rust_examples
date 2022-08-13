@@ -27,6 +27,6 @@ fn can_i_habe_the_trait_boss() {
 
     let single_trait_struct = HasSingleTrait {};
     let multiple_trait_struct = HasSingleTrait {};
-    let requires_single_trait: Vec<Box<dyn FirstTrait, SecondTrait>> =
-        vec![Box::new(multiple_trait_struct)];
+    // let requires_single_trait: Vec<Box<dyn FirstTrait, SecondTrait>> =
+        // vec![Box::new(multiple_trait_struct)];
 }
