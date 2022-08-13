@@ -32,15 +32,15 @@ pub struct JobStats {
     num_first_interviews_taken: u8,
     num_rejection_after_first_interview: u8,
     num_referrals: u8,
-    mean_days_between_application_first_interview: f64,
-    // median_days_between_application_and_first_interview: f64,
+    mean_days_between_application_first_interview: i64,
+    // median_days_between_application_and_first_interview: i64,
     // shortest_days_between_application_and_first_interview: u8,
     // longest_days_between_application_and_frist_interview: u8,
-    mean_days_between_application_and_rejection: f64,
-    // median_days_between_application_and_rejection: f64,
+    mean_days_between_application_and_rejection: i64,
+    // median_days_between_application_and_rejection: i64,
     // shortest_days_between_application_and_rejection: u8,
     // longest_days_between_application_and_rejection: u8,
-    mean_time_between_first_interview_and_offer: f64,
+    mean_time_between_first_interview_and_offer: i64,
     // median_time_between_first_interview_and_offer: u8,
     // shortest_time_between_first_interview_and_offer: u8,
     // longest_time_between_first_interview_and_offer: u8,
@@ -103,59 +103,67 @@ impl JobStats {
             mean_days_between_application_first_interview:
                 days_between_application_and_first_interview(&raw_input)
                     .into_iter()
-                    .sum::<f64>()
-                    / (num_first_interviews_taken as f64),
+                    .sum::<i64>()
+                    / (num_first_interviews_taken as i64),
             mean_days_between_application_and_rejection: days_between_application_and_rejection(
                 &raw_input,
             )
             .into_iter()
-            .sum::<f64>()
-                / (num_first_interviews_taken as f64),
+            .sum::<i64>()
+                / (num_first_interviews_taken as i64),
             mean_time_between_first_interview_and_offer: days_between_first_interview_and_offer(
                 &raw_input,
             )
             .into_iter()
-            .sum::<f64>()
-                / (num_first_interviews_taken as f64),
+            .sum::<i64>()
+                / (num_first_interviews_taken as i64),
+            // median_days_between_application_and_first_interview: median(
+                // &mut days_between_application_and_first_interview(&raw_input)
+            // ).unwrap(),
         }
     }
 }
 
-fn days_between_first_interview_and_offer(input_stats: &Vec<InputStat>) -> Vec<f64> {
+fn days_between_first_interview_and_offer(input_stats: &Vec<InputStat>) -> Vec<i64> {
     let mut days_between_first_interview_and_offer = vec![];
 
-    // for stat in input_stats {
-    // if stat.offer_dt.is_some() && stat.first_interview.is_some() {
-    // days_between_first_interview_and_offer
-    // .push(f64_to_datetime(stat.offer_dt.unwrap()) - f64_to_datetime(stat.first_interview.unwrap()));
-    // }
-    // }
+    for stat in input_stats {
+        if stat.offer_dt.is_some() && stat.first_interview.is_some() {
+            days_between_first_interview_and_offer.push(
+                (f64_to_datetime(stat.offer_dt.unwrap())
+                    - f64_to_datetime(stat.first_interview.unwrap()))
+                .num_days(),
+            );
+        }
+    }
 
     days_between_first_interview_and_offer
 }
 
-/// TODO: This must be converted to dates
-fn days_between_application_and_rejection(input_stats: &Vec<InputStat>) -> Vec<f64> {
+fn days_between_application_and_rejection(input_stats: &Vec<InputStat>) -> Vec<i64> {
     let mut days_between_application_and_rejection = vec![];
 
     for stat in input_stats {
-        if stat.rejected_dt.is_some() {
-            days_between_application_and_rejection
-                .push(stat.rejected_dt.unwrap() - stat.applied_dt);
+        if stat.offer_dt.is_some() && stat.first_interview.is_some() {
+            days_between_application_and_rejection.push(
+                (f64_to_datetime(stat.rejected_dt.unwrap()) - f64_to_datetime(stat.applied_dt))
+                    .num_days(),
+            );
         }
     }
 
     days_between_application_and_rejection
 }
 
-/// TODO: This must be converted to dates
-fn days_between_application_and_first_interview(input_stats: &Vec<InputStat>) -> Vec<f64> {
+fn days_between_application_and_first_interview(input_stats: &Vec<InputStat>) -> Vec<i64> {
     let mut days_between_application_and_first_interview = vec![];
 
     for stat in input_stats {
-        if stat.first_interview.is_some() {
-            days_between_application_and_first_interview
-                .push(stat.first_interview.unwrap() - stat.applied_dt);
+        if stat.offer_dt.is_some() && stat.first_interview.is_some() {
+            days_between_application_and_first_interview.push(
+                (f64_to_datetime(stat.first_interview.unwrap()) - f64_to_datetime(stat.applied_dt))
+                    .num_days(),
+            );
         }
     }
 
@@ -163,8 +171,8 @@ fn days_between_application_and_first_interview(input_stats: &Vec<InputStat>) ->
 }
 
 /// Divides 2 floats and outputs the result as a string with a precision of 2
-fn percent_with_precision_2(part: f32, whole: f32) -> String {
-    format!("{:.2}%", (part / whole) * 100.0f32)
+fn percent_with_precision_2(part: f64, whole: f64) -> String {
+    format!("{:.2}%", (part / whole) * 100.0f64)
 }
 
 impl std::fmt::Display for JobStats {
@@ -259,22 +267,22 @@ impl std::fmt::Display for JobStats {
 }
 
 /// Finds the mean of a vector of numbers
-fn mean(v: &[f32]) -> Option<f32> {
+fn mean(v: &[i64]) -> Option<f64> {
     if v.len() > 0 {
-        return Some(v.into_iter().sum::<f32>() / v.len() as f32);
+        return Some(v.into_iter().sum::<i64>() as f64 / v.len() as f64);
     }
     None
 }
 
 /// Given a vector finds the median value
 /// if the array is empty return None
-fn median(v: &mut [f32]) -> Option<f32> {
+fn median(v: &mut [i64]) -> Option<f64> {
     // if its even find the mean of the 2 middle elements
     let s = v.len();
     if s == 0 {
         return None;
     } else if s == 1 {
-        return Some(v[0]);
+        return Some(v[0] as f64);
     }
 
     v.sort_by(|a, b| a.partial_cmp(b).unwrap());
@@ -285,7 +293,7 @@ fn median(v: &mut [f32]) -> Option<f32> {
         return mean(&v[l_mid..r_mid]);
     }
 
-    Some(v[(s / 2) as usize])
+    Some(v[(s / 2) as usize] as f64)
 }
 
 #[cfg(test)]
@@ -295,17 +303,17 @@ mod test {
     #[test]
     fn test_median() {
         assert_eq!(None, median(&mut []));
-        assert_eq!(1f32, median(&mut [1f32]).unwrap());
-        assert_eq!(4f32, median(&mut [1f32, 4f32, 5f32]).unwrap());
-        assert_eq!(4f32, median(&mut [1f32, 5f32, 4f32]).unwrap());
-        assert_eq!(4.5f32, median(&mut [1f32, 4f32, 5f32, 9f32]).unwrap());
-        assert_eq!(4.5f32, median(&mut [5f32, 9f32, 1f32, 4f32]).unwrap());
+        assert_eq!(1f64, median(&mut [1i64]).unwrap());
+        assert_eq!(4f64, median(&mut [1i64, 4i64, 5i64]).unwrap());
+        assert_eq!(4f64, median(&mut [1i64, 5i64, 4i64]).unwrap());
+        assert_eq!(4.5f64, median(&mut [1i64, 4i64, 5i64, 9i64]).unwrap());
+        assert_eq!(4.5f64, median(&mut [5i64, 9i64, 1i64, 4i64]).unwrap());
     }
 
     #[test]
     fn test_mean() {
-        assert_eq!(1.5f32, mean(&[1f32, 2f32]).unwrap());
-        assert_eq!(1f32, mean(&[1f32]).unwrap());
+        assert_eq!(1.5f64, mean(&[1i64, 2i64]).unwrap());
+        assert_eq!(1f64, mean(&[1i64]).unwrap());
         assert_eq!(None, mean(&[]));
     }
 
@@ -343,11 +351,11 @@ mod test {
 
     #[test]
     fn test_precision_2() {
-        assert_eq!(percent_with_precision_2(3.0f32, 8.0f32), "37.50%")
+        assert_eq!(percent_with_precision_2(3.0f64, 8.0f64), "37.50%")
     }
 
     #[test]
-    fn test_f32_to_datetime() {
+    fn test_f64_to_datetime() {
         let expected_dt = NaiveDate::from_ymd(2022, 04, 08);
         assert_eq!(expected_dt, f64_to_datetime(20220408.0f64));
     }
