@@ -1,4 +1,4 @@
-use chrono::{DateTime, NaiveDate};
+use chrono::NaiveDate;
 use serde::Deserialize;
 
 // allow dead code on clone for testing
@@ -32,18 +32,22 @@ pub struct JobStats {
     num_first_interviews_taken: u8,
     num_rejection_after_first_interview: u8,
     num_referrals: u8,
-    mean_days_between_application_first_interview: i64,
-    // median_days_between_application_and_first_interview: i64,
-    // shortest_days_between_application_and_first_interview: u8,
-    // longest_days_between_application_and_frist_interview: u8,
-    mean_days_between_application_and_rejection: i64,
-    // median_days_between_application_and_rejection: i64,
-    // shortest_days_between_application_and_rejection: u8,
-    // longest_days_between_application_and_rejection: u8,
-    mean_time_between_first_interview_and_offer: i64,
-    // median_time_between_first_interview_and_offer: u8,
-    // shortest_time_between_first_interview_and_offer: u8,
-    // longest_time_between_first_interview_and_offer: u8,
+    mean_days_between_application_first_interview: f64,
+    median_days_between_application_and_first_interview: f64,
+    shortest_days_between_application_and_first_interview: i64,
+    longest_days_between_application_and_first_interview: i64,
+    mean_days_between_application_and_rejection: f64,
+    median_days_between_application_and_rejection: f64,
+    shortest_days_between_application_and_rejection: i64,
+    longest_days_between_application_and_rejection: i64,
+    mean_time_between_first_interview_and_offer: f64,
+    median_time_between_first_interview_and_offer: f64,
+    shortest_time_between_first_interview_and_offer: i64,
+    longest_time_between_first_interview_and_offer: i64,
+    mean_time_between_first_interview_and_rejection: f64,
+    median_time_between_first_interview_and_rejection: f64,
+    longest_time_betwen_first_interview_and_rejection: i64,
+    shortest_time_betwen_first_interview_and_rejection: i64,
 }
 
 impl JobStats {
@@ -101,27 +105,102 @@ impl JobStats {
                 .collect::<Vec<InputStat>>()
                 .len() as u8,
             mean_days_between_application_first_interview:
+                (days_between_application_and_first_interview(&raw_input)
+                    .into_iter()
+                    .sum::<i64>() as f64)
+                    / (num_first_interviews_taken as f64),
+            mean_days_between_application_and_rejection: (days_between_application_and_rejection(
+                &raw_input,
+            )
+            .into_iter()
+            .sum::<i64>() as f64)
+                / (num_first_interviews_taken as f64),
+            mean_time_between_first_interview_and_offer: (days_between_first_interview_and_offer(
+                &raw_input,
+            )
+            .into_iter()
+            .sum::<i64>() as f64)
+                / (num_first_interviews_taken as f64),
+            median_days_between_application_and_first_interview: median(
+                &mut days_between_application_and_first_interview(&raw_input),
+            )
+            .unwrap(),
+            shortest_days_between_application_and_first_interview:
                 days_between_application_and_first_interview(&raw_input)
                     .into_iter()
-                    .sum::<i64>()
-                    / (num_first_interviews_taken as i64),
-            mean_days_between_application_and_rejection: days_between_application_and_rejection(
+                    .min()
+                    .unwrap(),
+            longest_days_between_application_and_first_interview:
+                days_between_application_and_first_interview(&raw_input)
+                    .into_iter()
+                    .max()
+                    .unwrap(),
+            median_days_between_application_and_rejection: median(
+                &mut days_between_application_and_rejection(&raw_input),
+            )
+            .unwrap(),
+            shortest_days_between_application_and_rejection:
+                days_between_application_and_rejection(&raw_input)
+                    .into_iter()
+                    .min()
+                    .unwrap(),
+            longest_days_between_application_and_rejection: days_between_application_and_rejection(
                 &raw_input,
             )
             .into_iter()
-            .sum::<i64>()
-                / (num_first_interviews_taken as i64),
-            mean_time_between_first_interview_and_offer: days_between_first_interview_and_offer(
+            .max()
+            .unwrap(),
+            median_time_between_first_interview_and_offer: median(
+                &mut days_between_first_interview_and_offer(&raw_input),
+            )
+            .unwrap(),
+            shortest_time_between_first_interview_and_offer:
+                days_between_first_interview_and_offer(&raw_input)
+                    .into_iter()
+                    .min()
+                    .unwrap(),
+            longest_time_between_first_interview_and_offer: days_between_first_interview_and_offer(
                 &raw_input,
             )
             .into_iter()
-            .sum::<i64>()
-                / (num_first_interviews_taken as i64),
-            // median_days_between_application_and_first_interview: median(
-                // &mut days_between_application_and_first_interview(&raw_input)
-            // ).unwrap(),
+            .max()
+            .unwrap(),
+            mean_time_between_first_interview_and_rejection:
+                (days_between_first_interview_and_rejection(&raw_input)
+                    .into_iter()
+                    .sum::<i64>() as f64)
+                    / (num_first_interviews_taken as f64),
+            median_time_between_first_interview_and_rejection: median(
+                &mut days_between_first_interview_and_rejection(&raw_input),
+            )
+            .unwrap(),
+            shortest_time_betwen_first_interview_and_rejection:
+                days_between_first_interview_and_rejection(&raw_input)
+                    .into_iter()
+                    .min()
+                    .unwrap(),
+            longest_time_betwen_first_interview_and_rejection:
+                days_between_first_interview_and_rejection(&raw_input)
+                    .into_iter()
+                    .max()
+                    .unwrap(),
         }
     }
+}
+fn days_between_first_interview_and_rejection(input_stats: &Vec<InputStat>) -> Vec<i64> {
+    let mut days_between_first_interview_and_offer = vec![];
+
+    for stat in input_stats {
+        if stat.offer_dt.is_some() && stat.first_interview.is_some() {
+            days_between_first_interview_and_offer.push(
+                (f64_to_datetime(stat.rejected_dt.unwrap())
+                    - f64_to_datetime(stat.first_interview.unwrap()))
+                .num_days(),
+            );
+        }
+    }
+
+    days_between_first_interview_and_offer
 }
 
 fn days_between_first_interview_and_offer(input_stats: &Vec<InputStat>) -> Vec<i64> {
@@ -243,25 +322,57 @@ impl std::fmt::Display for JobStats {
             "|Mean time (days) between application date and first interview|{}|",
             self.mean_days_between_application_first_interview
         );
-        println!("|Median time (days) between application date and first interview |");
-        println!("|Shortest time (days) between application date and first interview |");
-        println!("|Longest time (days) between application date and first interview |");
+        println!(
+            "|Median time (days) between application date and first interview|{}|",
+            self.median_days_between_application_and_first_interview
+        );
+        println!(
+            "|Shortest time (days) between application date and first interview|{}|",
+            self.shortest_days_between_application_and_first_interview
+        );
+        println!(
+            "|Longest time (days) between application date and first interview|{}|",
+            self.longest_days_between_application_and_first_interview
+        );
         println!("|---|---|");
-        println!("|Mean time (days) between application and rejection |");
-        println!("|Median time (days) between application and rejection |");
-        println!("|Shortest time (days) between application and rejection |");
-        println!("|Longest time (days) between application and rejection |");
+        println!(
+            "|Mean time (days) between application and rejection|{}|",
+            self.mean_days_between_application_and_rejection
+        );
+        println!(
+            "|Median time (days) between application and rejection|{}|",
+            self.median_days_between_application_and_rejection
+        );
+        println!(
+            "|Shortest time (days) between application and rejection|{}|",
+            self.shortest_days_between_application_and_rejection
+        );
+        println!(
+            "|Longest time (days) between application and rejection|{}|",
+            self.longest_days_between_application_and_rejection
+        );
         println!("|---|---|");
-        println!("|Mean time between first interview and rejection |");
-        println!("|Median time between first interview and rejection |");
-        println!("|Shortest time between first interview and rejection |");
-        println!("|Longest time between first interview and rejection |");
+        println!(
+            "|Mean time (days) between first interview and rejection|{}|",
+            self.mean_time_between_first_interview_and_rejection
+        );
+        println!(
+            "|Median time (days) between first interview and rejection|{}|",
+            self.median_time_between_first_interview_and_rejection
+        );
+        println!("|Shortest time (days) between first interview and rejection |{}|",
+            self.shortest_time_betwen_first_interview_and_rejection);
+        println!("|Longest time (days) between first interview and rejection|{}|",
+            self.longest_time_betwen_first_interview_and_rejection);
         println!("|---|---|");
-        println!("|Mean time between first interview and offer|");
-        println!("|Median time between first interview and offer|");
-        println!("|Shortest time between first interview and offer|");
-        println!("|Longest time between first interview and offer|");
-
+        println!("|Mean time (days) between first interview and offer|{}|",
+            self.mean_time_between_first_interview_and_offer);
+        println!("|Median time (days) between first interview and offer|{}|",
+            self.median_time_between_first_interview_and_offer);
+        println!("|Shortest time (days) between first interview and offer|{}|",
+            self.shortest_time_between_first_interview_and_offer);
+        println!("|Longest time (days) between first interview and offer|{}|",
+            self.longest_time_between_first_interview_and_offer);
         Ok(())
     }
 }
@@ -319,7 +430,29 @@ mod test {
 
     #[test]
     fn test_new() {
-        let input_stat = InputStat {
+        let input_stat_1 = InputStat {
+            company: "company1".to_string(),
+            position: "software1".to_string(),
+            applied_dt: 20220406.0,
+            rejected_dt: Some(20220408.0),
+            first_interview: Some(20220407.0),
+            offer_dt: Some(20220408.0),
+            offer_amt: Some(349.99),
+            accepted: Some("T".to_string()),
+            referral: Some("Ol Nessy".to_string()),
+        };
+        let input_stat_2 = InputStat {
+            company: "company".to_string(),
+            position: "software".to_string(),
+            applied_dt: 20220406.0,
+            rejected_dt: Some(20220408.0),
+            first_interview: Some(20220407.0),
+            offer_dt: Some(20220408.0),
+            offer_amt: Some(349.99),
+            accepted: Some("T".to_string()),
+            referral: Some("Ol Nessy".to_string()),
+        };
+        let input_stat_3 = InputStat {
             company: "company".to_string(),
             position: "software".to_string(),
             applied_dt: 20220406.0,
