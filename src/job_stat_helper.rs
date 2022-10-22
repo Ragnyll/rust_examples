@@ -427,76 +427,49 @@ fn median(v: &mut [i64]) -> Option<f64> {
     Some(v[(s / 2) as usize] as f64)
 }
 
-#[cfg(test)]
-mod test {
-    use super::*;
+//#[cfg(test)]
+//mod test {
+    //use super::*;
 
-    #[test]
-    fn test_median() {
-        assert_eq!(None, median(&mut []));
-        assert_eq!(1f64, median(&mut [1i64]).unwrap());
-        assert_eq!(4f64, median(&mut [1i64, 4i64, 5i64]).unwrap());
-        assert_eq!(4f64, median(&mut [1i64, 5i64, 4i64]).unwrap());
-        assert_eq!(4.5f64, median(&mut [1i64, 4i64, 5i64, 9i64]).unwrap());
-        assert_eq!(4.5f64, median(&mut [5i64, 9i64, 1i64, 4i64]).unwrap());
-    }
+    //#[test]
+    //fn test_median() {
+        //assert_eq!(None, median(&mut []));
+        //assert_eq!(1f64, median(&mut [1i64]).unwrap());
+        //assert_eq!(4f64, median(&mut [1i64, 4i64, 5i64]).unwrap());
+        //assert_eq!(4f64, median(&mut [1i64, 5i64, 4i64]).unwrap());
+        //assert_eq!(4.5f64, median(&mut [1i64, 4i64, 5i64, 9i64]).unwrap());
+        //assert_eq!(4.5f64, median(&mut [5i64, 9i64, 1i64, 4i64]).unwrap());
+    //}
 
-    #[test]
-    fn test_mean() {
-        assert_eq!(1.5f64, mean(&[1i64, 2i64]).unwrap());
-        assert_eq!(1f64, mean(&[1i64]).unwrap());
-        assert_eq!(None, mean(&[]));
-    }
+    //#[test]
+    //fn test_mean() {
+        //assert_eq!(1.5f64, mean(&[1i64, 2i64]).unwrap());
+        //assert_eq!(1f64, mean(&[1i64]).unwrap());
+        //assert_eq!(None, mean(&[]));
+    //}
 
-    #[test]
-    fn test_new() {
-        let input_stat_1 = InputStat {
-            company: "company1".to_string(),
-            position: "software1".to_string(),
-            applied_dt: 20220406.0,
-            rejected_dt: Some(20220408.0),
-            first_interview: Some(20220407.0),
-            offer_dt: Some(20220408.0),
-            offer_amt: Some(349.99),
-            accepted: Some("T".to_string()),
-            referral: Some("Ol Nessy".to_string()),
-        };
-        let input_stats = vec![input_stat_1];
+    //#[test]
+    //fn test_precision_2() {
+        //for i in 0..5 {
+            //let x = i;
+            //println!("x: {x}");
+        //}
+        //assert_eq!(1, 2);
+        //assert_eq!(percent_with_precision_2(3.0f64, 8.0f64), "37.50%")
+    //}
 
-        let job_stats = JobStats::new(input_stats);
+    //#[test]
+    //fn test_f64_to_datetime() {
+        //let expected_dt = NaiveDate::from_ymd(2022, 04, 08);
+        //assert_eq!(expected_dt, f64_to_datetime(20220408.0f64));
+    //}
 
-        assert_eq!(job_stats.num_applied, 1);
-        assert_eq!(job_stats.num_offers, 1);
-        assert_eq!(job_stats.num_rejections_all_types, 1);
-        assert_eq!(job_stats.num_rejections_no_first_interview, 0);
-        assert_eq!(job_stats.num_first_interviews_i_declined, 0);
-        assert_eq!(job_stats.num_rejections_no_first_interview, 0);
-        assert_eq!(job_stats.num_first_interviews_taken, 1);
-        assert_eq!(job_stats.num_rejection_after_first_interview, 1);
-        assert_eq!(job_stats.num_referrals, 1);
+    //#[test]
+    //fn test_datetime_delta() {
+        //let local_date_pre = NaiveDate::from_ymd(2022, 04, 08);
+        //let local_date_post = NaiveDate::from_ymd(2022, 04, 12);
 
-        println!("{}", job_stats);
-
-        assert_eq!(1, 0)
-    }
-
-    #[test]
-    fn test_precision_2() {
-        assert_eq!(percent_with_precision_2(3.0f64, 8.0f64), "37.50%")
-    }
-
-    #[test]
-    fn test_f64_to_datetime() {
-        let expected_dt = NaiveDate::from_ymd(2022, 04, 08);
-        assert_eq!(expected_dt, f64_to_datetime(20220408.0f64));
-    }
-
-    #[test]
-    fn test_datetime_delta() {
-        let local_date_pre = NaiveDate::from_ymd(2022, 04, 08);
-        let local_date_post = NaiveDate::from_ymd(2022, 04, 12);
-
-        let delta = local_date_post - local_date_pre;
-        assert_eq!(4, delta.num_days());
-    }
-}
+        //let delta = local_date_post - local_date_pre;
+        //assert_eq!(4, delta.num_days());
+    //}
+//}
